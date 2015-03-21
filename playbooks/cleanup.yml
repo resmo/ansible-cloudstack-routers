@@ -1,0 +1,18 @@
+---
+- hosts: all
+  remote_user: root
+  tasks:
+  - name: make some space
+    command: find -name '*-*' -mtime +7 -delete chdir=/var/log
+    changed_when: false
+
+  - name: remove old packages
+    command: apt-get clean
+    always_run: yes
+    changed_when: false
+
+  - name: remove indexes
+    shell: rm -r /var/lib/apt/lists/*
+    always_run: yes
+    changed_when: false
+    failed_when: false

@@ -1,0 +1,17 @@
+---
+- hosts: all
+  serial: 10
+  tasks:
+  - copy: src=files/sources.list dest=/etc/apt/sources.list
+
+  - apt: update_cache=yes
+  
+  - apt: pkg={{ item }} state=latest
+    with_items:
+    - ntp
+    - openssl
+    - apache2
+    - ca-certificates
+    - bash
+    - bind9-host
+    - libc-bin

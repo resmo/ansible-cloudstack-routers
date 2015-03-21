@@ -1,0 +1,10 @@
+/var/log/conntrackd-stats.log {
+    daily
+    delaycompress
+    compress
+    rotate 2
+    missingok
+    postrotate
+        invoke-rc.d conntrackd restart > /dev/null
+    endscript
+}

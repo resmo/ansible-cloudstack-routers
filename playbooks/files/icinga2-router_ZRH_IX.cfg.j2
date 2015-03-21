@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+
+{% for host in groups['ZUERICH_IX'] -%}
+object Host "{{ host }} - {{ hostvars[host]['ansible_ssh_host'] }}" {
+  import "generic-host-pnp"
+  groups = [ " {{ hostvars[host]['group'] }}", "cs-router" ]
+  address = "{{ hostvars[host]['ansible_ssh_host'] }}"
+}
+{% endfor %}
+
