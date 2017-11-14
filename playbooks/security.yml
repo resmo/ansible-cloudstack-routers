@@ -1,5 +1,5 @@
 ---
-- hosts: all:!system
+- hosts: all
   serial: 10
   tasks:
   - name: configure sources.list

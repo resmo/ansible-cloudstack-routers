@@ -10,4 +10,4 @@ Host jump
 
 Host 10.*
   ProxyCommand ssh root@cloud.example.com -W %h:3922
-  IdentityFile ~/.ssh/cloud_id_rsa
+  IdentityFile ~/.ssh/cloud.example.com_id_rsa
