@@ -1,0 +1,4 @@
+[cloudstack]
+endpoint = http://cloud.example.com/client/api
+key =
+secret = 

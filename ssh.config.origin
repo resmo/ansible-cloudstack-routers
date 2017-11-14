@@ -1,0 +1,13 @@
+Host *
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  User root
+  ControlMaster auto
+
+Host jump
+  HostName cloud.example.com
+
+Host 10.*
+  ProxyCommand ssh root@cloud.example.com -W %h:3922
+  IdentityFile ~/.ssh/cloud_id_rsa

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
+# (c) 2017, René Moser <mail@renemoser.net>
 #
 # This file is part of Ansible,
 #
@@ -36,28 +36,28 @@ When run against a specific router, this script returns the following attributes
 based on the data obtained from CloudStack API:
 
 {
-  "zone": "ZUERICH", 
-  "default_ip": "1.2.3.4", 
+  "zone": "ZUERICH",
+  "default_ip": "1.2.3.4",
   "nic": [
     {
-      "ip": "10.101.66.1", 
-      "mac": "02:00:46:28:00:02", 
+      "ip": "10.101.66.1",
+      "mac": "02:00:46:28:00:02",
       "netmask": "255.255.255.0"
-    }, 
+    },
     {
-      "ip": "10.100.9.134", 
-      "mac": "02:00:00:38:06:4c", 
+      "ip": "10.100.9.134",
+      "mac": "02:00:00:38:06:4c",
       "netmask": "255.255.255.0"
-    }, 
+    },
     {
-      "ip": "1.2.3.4", 
-      "mac": "06:0c:fc:00:35:a1", 
+      "ip": "1.2.3.4",
+      "mac": "06:0c:fc:00:35:a1",
       "netmask": "255.255.255.128"
     }
-  ], 
-  "ansible_ssh_host": "10.100.9.134", 
-  "state": "Running", 
-  "role": "VIRTUAL_ROUTER", 
+  ],
+  "ansible_ssh_host": "10.100.9.134",
+  "state": "Running",
+  "role": "VIRTUAL_ROUTER",
   "service_offering": "System Offering for Software Router XLarge"
 }
 
@@ -65,7 +65,6 @@ based on the data obtained from CloudStack API:
 usage: cloudstack-routers.py [--list] [--host HOST] [--project PROJECT]
 """
 
-import os
 import sys
 import argparse
 
@@ -93,8 +92,9 @@ class CloudStackInventory(object):
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
-        except CloudStackException, e:
+        except CloudStackException:
             print >> sys.stderr, "Error: Could not connect to CloudStack API"
+            sys.exit(1)
 
         project_id = -1
         if options.project:
@@ -103,14 +103,12 @@ class CloudStackInventory(object):
         if options.host:
             data = self.get_host(options.host, project_id)
             print json.dumps(data, indent=2)
-
         elif options.list:
             data = self.get_list(project_id)
             print json.dumps(data, indent=2)
         else:
             print >> sys.stderr, "usage: --list | --host <hostname> [--project <project>]"
             sys.exit(1)
-
 
     def get_project_id(self, project):
         projects = self.cs.listProjects(listall=True)
@@ -164,19 +162,29 @@ class CloudStackInventory(object):
                     })
                     if nic['isdefault']:
                         data['default_ip'] = nic['ipaddress']
-                break;
-        return data
+                break
 
+        systemvms = self.cs.listSystemVms()
+        for systemvm in systemvms.get('systemvm') or []:
+            systemvm_name = systemvm['name']
+            if name == systemvm_name:
+                data['zone'] = systemvm['zonename']
+                if 'privateip' in systemvm:
+                    data['ansible_ssh_host'] = systemvm['privateip']
+                data['state'] = systemvm['state']
+                break
+
+        return data
 
     def get_list(self, project_id):
         data = {
             'all': {
                 'hosts': [],
-                },
+            },
             '_meta': {
                 'hostvars': {},
-                },
-            }
+            },
+        }
 
         routers = []
 
@@ -223,16 +231,16 @@ class CloudStackInventory(object):
             if 'redundantstate' in router:
                 data['_meta']['hostvars'][router_name]['redundant_state'] = router['redundantstate']
 
-                if router['redundantstate'] in [ 'MASTER', 'BACKUP' ]:
+                if router['redundantstate'] in ['MASTER', 'BACKUP']:
                     data = self.add_group(data, 'redundant_routers', router_name)
 
-                if router['redundantstate'] in [ 'MASTER' ]:
+                if router['redundantstate'] in ['MASTER']:
                     data = self.add_group(data, 'redundant_master_routers', router_name)
 
-                if router['redundantstate'] in [ 'BACKUP' ]:
+                if router['redundantstate'] in ['BACKUP']:
                     data = self.add_group(data, 'redundant_backup_routers', router_name)
 
-                if router['redundantstate'] in [ 'UNKNOWN' ]:
+                if router['redundantstate'] in ['UNKNOWN']:
                     data = self.add_group(data, 'non_redundant_routers', router_name)
 
             data['_meta']['hostvars'][router_name]['service_offering'] = router['serviceofferingname']
@@ -242,9 +250,38 @@ class CloudStackInventory(object):
                     'ip': nic['ipaddress'],
                     'mac': nic['macaddress'],
                     'netmask': nic['netmask'],
-                    })
+                })
                 if nic['isdefault']:
                     data['_meta']['hostvars'][router_name]['default_ip'] = nic['ipaddress']
+
+        systemvms = self.cs.listSystemVms()
+
+        for systemvm in systemvms.get('systemvm') or []:
+            if systemvm['state'] != 'Running':
+                continue
+
+            if 'privateip' not in systemvm:
+                continue
+
+            systemvm_name = systemvm['name']
+
+            data['all']['hosts'].append(systemvm_name)
+            # Make a group per domain
+            data = self.add_group(data, 'ROOT', systemvm_name)
+
+            data['_meta']['hostvars'][systemvm_name] = dict(
+                group='ROOT',
+                domain='ROOT',
+                account='system',
+                zone=systemvm['zonename']
+            )
+
+            # Make a group per zone
+            data = self.add_group(data, systemvm['zonename'], systemvm_name)
+
+            data['_meta']['hostvars'][systemvm_name]['ansible_ssh_host'] = systemvm['privateip']
+            data['_meta']['hostvars'][systemvm_name]['state'] = systemvm['state']
+
         return data
 
 
