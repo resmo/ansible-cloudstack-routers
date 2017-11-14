@@ -9,23 +9,26 @@ Install this repo on a linux workstation which can SSH in to the cloudstack mana
 
 # Usage
 
-## 1. Fork this repo and git clone your fork on your CloudStack management server
+## 1. Fork this repo 
+
+git clone your on a linux server having SSH access to the cloudstack managmement server.
 
     git clone git@github.com:<your_handle>/ansible-cloudstack-routers.git
     cd ansible-cloudstack-routers
 
-## 2. Install Ansible and dependencies on a linux server having SSH access to the cloudstack managmement server.
+## 2. Install Ansible and dependencies
 
     pip install ansible
     pip install -r requirements.txt
 
-## 3. Create a cloudstack.ini in the working dir or a ~.cloudstack.ini in your $HOME
+## 3. Configure access to the CloudStack API
 
-cloudstack api admin keys:
+Create a cloudstack.ini in the working dir or a ~.cloudstack.ini in your $HOME having the admin keys:
 
 ~~~
 cat $HOME/.cloudstack.ini
 [cloudstack]
+# admin keys!
 endpoint = https://cloud.example.com/client/api
 key = cloudstack api key
 secret = cloudstack api secret 
@@ -44,6 +47,8 @@ Verify the dynamic inventory also returns a json
 ~~~
 
 ## 4. Modify the ssh.config
+
+This is necessery for jump host configuration.
 
 ~~~
 cp ssh.config.origin ssh.config
@@ -73,7 +78,7 @@ Get the output of the command uptime of all routers
 ansible -a "uptime" all
 ~~~
 
-Routers are dynamiclly grouped by project, account, domain, zone, non_redundant_routers, redundant_routers, redundant_backup_routers, redundant_master_routers. This allows to filter by groups. 
+Play a bit! Routers are dynamiclly grouped by project, account, domain, zone, non_redundant_routers, redundant_routers, redundant_backup_routers, redundant_master_routers. This allows to filter by groups. 
 
 ~~~
 ansible -a "uptime" <zone_name>
