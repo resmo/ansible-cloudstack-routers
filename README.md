@@ -11,7 +11,7 @@ Install this repo on a linux workstation which can SSH in to the cloudstack mana
 
 ## 1. Fork this repo 
 
-git clone your on a linux server having SSH access to the cloudstack managmement server.
+git clone on a linux machine having SSH access to the cloudstack managmement server.
 
     git clone git@github.com:<your_handle>/ansible-cloudstack-routers.git
     cd ansible-cloudstack-routers
