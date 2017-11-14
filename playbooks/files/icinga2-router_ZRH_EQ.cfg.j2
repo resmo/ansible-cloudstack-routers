@@ -1,9 +1,0 @@
-# {{ ansible_managed }}
-
-{% for host in groups['BIEL_CU01'] -%}
-object Host "{{ host }} - {{ hostvars[host]['ansible_ssh_host'] }}" {
-  import "generic-host-pnp"
-  groups = [ "cs-router-ix","cs-router", ]
-  address = "{{ hostvars[host]['ansible_ssh_host'] }}"
-}
-{% endfor %}

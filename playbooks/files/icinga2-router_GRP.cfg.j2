@@ -1,9 +1,0 @@
-object HostGroup "cs-router}" {
-  display_name = "cs-router"
-}
-
-{% for group in groups -%}
-object HostGroup "{{ group }}" {
-  display_name = "{{ group }}"
-}
-{% endfor %}
